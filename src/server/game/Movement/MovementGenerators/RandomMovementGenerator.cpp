@@ -112,20 +112,15 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
         break;
     }
 
+    creature.AddUnitMovementFlag(is_air_ok ? MOVEMENTFLAG_WALKING : MOVEMENTFLAG_CAN_FLY);
     Traveller<Creature> traveller(creature);
     creature.SetOrientation(creature.GetAngle(nx, ny));
     i_destinationHolder.SetDestination(traveller, nx, ny, nz);
     creature.AddUnitState(UNIT_STAT_ROAMING);
     if (is_air_ok)
-    {
         i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
-    }
-    //else if (is_water_ok) // Swimming mode to be done with more than this check
     else
-    {
         i_nextMoveTime.Reset(urand(500+i_destinationHolder.GetTotalTravelTime(), 5000+i_destinationHolder.GetTotalTravelTime()));
-        creature.AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
-    }
 
     //Call for creature group update
     if (creature.GetFormation() && creature.GetFormation()->getLeader() == &creature)
@@ -166,35 +161,17 @@ RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 diff)
 {
     if (creature.HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED))
     {
-        i_nextMoveTime.Update(i_nextMoveTime.GetExpiry());    // Expire the timer
+        i_nextMoveTime.Reset(0);    // Expire the timer
         creature.ClearUnitState(UNIT_STAT_ROAMING);
         return true;
     }
 
-    i_nextMoveTime.Update(diff);
-
-    if (i_destinationHolder.HasArrived() && !creature.IsStopped() && !creature.canFly())
-        creature.ClearUnitState(UNIT_STAT_ROAMING | UNIT_STAT_MOVE);
-
-    if (!i_destinationHolder.HasArrived() && creature.IsStopped())
-        creature.AddUnitState(UNIT_STAT_ROAMING);
-
     CreatureTraveller traveller(creature);
 
-    if (i_destinationHolder.UpdateTraveller(traveller, diff, true))
-    {
-        if (i_nextMoveTime.Passed())
-        {
-            if (irand(0, RUNNING_CHANCE_RANDOMMV) > 0)
-                creature.AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
-            _setRandomLocation(creature);
-        }
-        else if (creature.isPet() && creature.GetOwner() && !creature.IsWithinDist(creature.GetOwner(), PET_FOLLOW_DIST+2.5f))
-        {
-           creature.RemoveUnitMovementFlag(MOVEMENTFLAG_WALKING);
-           _setRandomLocation(creature);
-        }
-    }
+    i_nextMoveTime.Update(diff);
+    if (i_nextMoveTime.Passed())
+        _setRandomLocation(creature);
+
     return true;
 }
 

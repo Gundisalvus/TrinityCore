@@ -66,7 +66,8 @@ class TargetedMovementGenerator
         float i_offset;
         float i_angle;
         DestinationHolder< Traveller<T> > i_destinationHolder;
-        bool i_recalculateTravel;
+        bool i_recalculateTravel : 1;
+        bool i_targetReached : 1;
         float i_targetX, i_targetY, i_targetZ;
 };
 #endif

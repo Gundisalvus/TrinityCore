@@ -141,6 +141,11 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
         if (i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x, y, z) < bothObjectSize)
             return;
     */
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
+        ((Creature&)owner).AddUnitMovementFlag(SPLINEFLAG_FLYING);
+
+    i_targetReached = false;
+    i_recalculateTravel = false;
     i_destinationHolder.SetDestination(traveller, x, y, z);
     owner.AddUnitState(UNIT_STAT_CHASE);
     i_destinationHolder.StartTravel(traveller);
@@ -198,40 +203,30 @@ TargetedMovementGenerator<T>::Update(T &owner, const uint32 time_diff)
 
     Traveller<T> traveller(owner);
 
-    if (!i_destinationHolder.HasDestination())
-        _setTargetLocation(owner);
-    else if (owner.IsStopped() && !i_destinationHolder.HasArrived())
-    {
-        owner.AddUnitState(UNIT_STAT_CHASE);
-        i_destinationHolder.StartTravel(traveller);
-        return true;
-    }
-
     if (i_destinationHolder.UpdateTraveller(traveller, time_diff))
     {
-        // put targeted movement generators on a higher priority
-        //if (owner.GetObjectSize())
-        //i_destinationHolder.ResetUpdate(50);
+        float dist = i_target->GetObjectSize() + owner.GetObjectSize()
+            + sWorld->getRate(RATE_TARGET_POS_RECALCULATION_RANGE);
+        if (i_destinationHolder.GetDistance3dFromDestSq(*i_target.getTarget()) > dist * dist)
+            _setTargetLocation(owner);
+    }
 
-        // target moved
-        if (i_targetX != i_target->GetPositionX() || i_targetY != i_target->GetPositionY()
-            || i_targetZ != i_target->GetPositionZ())
-        {
-            if (_setTargetLocation(owner) || !owner.HasUnitState(UNIT_STAT_FOLLOW))
-                owner.SetInFront(i_target.getTarget());
-            i_target->GetPosition(i_targetX, i_targetY, i_targetZ);
-        }
-
-        if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
-        {
-            i_recalculateTravel = false;
-            //Angle update will take place into owner.StopMoving()
+    if (i_destinationHolder.HasArrived())
+    {
+        if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
             owner.SetInFront(i_target.getTarget());
+    }
 
-            owner.StopMoving();
-            if (owner.IsWithinMeleeRange(i_target.getTarget()) && !owner.HasUnitState(UNIT_STAT_FOLLOW))
-                owner.Attack(i_target.getTarget(), true);
-        }
+    if (!i_targetReached)
+    {
+        i_targetReached = true;
+        if (owner.IsWithinMeleeRange(i_target.getTarget()) && !owner.HasUnitState(UNIT_STAT_FOLLOW))
+            owner.Attack(i_target.getTarget(), true);
+    }
+    else
+    {
+        if (i_recalculateTravel)
+            _setTargetLocation(owner);
     }
 
     // Implemented for PetAI to handle resetting flags when pet owner reached
