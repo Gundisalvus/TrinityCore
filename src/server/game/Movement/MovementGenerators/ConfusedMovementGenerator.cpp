@@ -20,7 +20,8 @@
 #include "MapManager.h"
 #include "Opcodes.h"
 #include "ConfusedMovementGenerator.h"
-#include "DestinationHolderImp.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 #include "VMapFactory.h"
 
 #ifdef MAP_BASED_RAND_GEN
@@ -115,7 +116,6 @@ ConfusedMovementGenerator<T>::Reset(T &unit)
 {
     i_nextMove = 1;
     i_nextMoveTime.Reset(0);
-    i_destinationHolder.ResetUpdate();
     unit.StopMoving();
 }
 
@@ -123,9 +123,6 @@ template<class T>
 bool
 ConfusedMovementGenerator<T>::Update(T &unit, const uint32 diff)
 {
-    if (!&unit)
-        return true;
-
     if (unit.HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED))
         return true;
 
@@ -133,16 +130,10 @@ ConfusedMovementGenerator<T>::Update(T &unit, const uint32 diff)
     {
         // currently moving, update location
         Traveller<T> traveller(unit);
-        if (i_destinationHolder.UpdateTraveller(traveller, diff))
+        if (unit.movespline->Finalized())
         {
-            if (i_destinationHolder.HasArrived())
-            {
-                // arrived, stop and wait a bit
-                unit.ClearUnitState(UNIT_STAT_MOVE);
-
-                i_nextMove = urand(1, MAX_CONF_WAYPOINTS);
-                i_nextMoveTime.Reset(urand(0, 1500-1));     // TODO: check the minimum reset time, should be probably higher
-            }
+            i_nextMove = urand(1,MAX_CONF_WAYPOINTS);
+            i_nextMoveTime.Reset(urand(0, 1500-1));     // TODO: check the minimum reset time, should be probably higher
         }
     }
     else
@@ -153,11 +144,13 @@ ConfusedMovementGenerator<T>::Update(T &unit, const uint32 diff)
         {
             // start moving
             ASSERT(i_nextMove <= MAX_CONF_WAYPOINTS);
-            const float x = i_waypoints[i_nextMove][0];
-            const float y = i_waypoints[i_nextMove][1];
-            const float z = i_waypoints[i_nextMove][2];
-            Traveller<T> traveller(unit);
-            i_destinationHolder.SetDestination(traveller, x, y, z);
+            float x = i_waypoints[i_nextMove][0];
+            float y = i_waypoints[i_nextMove][1];
+            float z = i_waypoints[i_nextMove][2];
+            Movement::MoveSplineInit init(unit);
+            init.MoveTo(x, y, z);
+            init.SetWalk(true);
+            init.Launch();
         }
     }
     return true;

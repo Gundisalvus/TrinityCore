@@ -20,8 +20,6 @@
 #define TRINITY_FLEEINGMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "DestinationHolder.h"
-#include "Traveller.h"
 
 template<class T>
 class FleeingMovementGenerator
@@ -56,8 +54,6 @@ class FleeingMovementGenerator
         float i_cur_angle;
         uint64 i_frightGUID;
         TimeTracker i_nextCheckTime;
-
-        DestinationHolder< Traveller<T> > i_destinationHolder;
 };
 
 class TimedFleeingMovementGenerator

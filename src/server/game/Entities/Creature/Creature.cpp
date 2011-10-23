@@ -48,7 +48,8 @@
 #include "Vehicle.h"
 #include "SpellAuraEffects.h"
 #include "Group.h"
-// apply implementation of the singletons
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 {
@@ -332,6 +333,8 @@ bool Creature::InitEntry(uint32 Entry, uint32 /*team*/, const CreatureData* data
     SetSpeed(MOVE_FLIGHT, 1.0f);    // using 1.0 rate
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
+
+    SetLevitate(canFly());
 
     // checked at loading
     m_defaultMovementType = MovementGeneratorType(cinfo->MovementType);
@@ -1412,7 +1415,7 @@ bool Creature::canStartAttack(Unit const* who, bool force) const
 
     if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PASSIVE))
         return false;
-        
+
     // Do not attack non-combat pets
     if (who->GetTypeId() == TYPEID_UNIT && who->GetCreatureType() == CREATURE_TYPE_NON_COMBAT_PET)
         return false;
@@ -1552,6 +1555,11 @@ bool Creature::FallGround()
     if (getDeathState() == DEAD_FALLING)
         return false;
 
+    Movement::MoveSplineInit init(*this);
+    init.MoveTo(GetPositionX(),GetPositionY(),tz);
+    init.SetFall();
+    init.Launch();
+
     float x, y, z;
     GetPosition(x, y, z);
     // use larger distance for vmap height search than in most other cases
@@ -1561,6 +1569,7 @@ bool Creature::FallGround()
 
     GetMotionMaster()->MoveFall(ground_Z, EVENT_FALL_GROUND);
     Unit::setDeathState(DEAD_FALLING);
+    movespline->_Finalize();
     return true;
 }
 
@@ -2415,4 +2424,27 @@ bool Creature::IsDungeonBoss() const
 {
     CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(GetEntry());
     return cinfo && (cinfo->flags_extra & CREATURE_FLAG_EXTRA_DUNGEON_BOSS);
+}
+
+void Creature::SetWalk(bool enable)
+{
+    if (enable)
+        m_movementInfo.AddMovementFlag(MOVEFLAG_WALK_MODE);
+    else
+        m_movementInfo.RemoveMovementFlag(MOVEFLAG_WALK_MODE);
+    WorldPacket data(enable ? SMSG_SPLINE_MOVE_SET_WALK_MODE : SMSG_SPLINE_MOVE_SET_RUN_MODE, 9);
+    data << GetPackGUID();
+    SendMessageToSet(&data, true);
+    UpdateWalkMode(this, false);
+}
+
+void Creature::SetLevitate(bool enable)
+{
+    if (enable)
+        m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
+    else
+        m_movementInfo.RemoveMovementFlag(MOVEFLAG_LEVITATING);
+    WorldPacket data(enable ? SMSG_SPLINE_MOVE_GRAVITY_DISABLE : SMSG_SPLINE_MOVE_GRAVITY_ENABLE, 9);
+    data << GetPackGUID();
+    SendMessageToSet(&data, true);
 }

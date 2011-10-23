@@ -20,8 +20,9 @@
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "Traveller.h"
-#include "DestinationHolderImp.h"
 #include "WorldPacket.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 void HomeMovementGenerator<Creature>::Initialize(Creature & owner)
 {
@@ -47,42 +48,18 @@ void HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
     if (owner.HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED))
         return;
 
-    float x, y, z;
-    owner.GetHomePosition(x, y, z, ori);
+    Movement::MoveSplineInit init(owner);
+    float x, y, z, o;
+    owner.GetHomePosition(x, y, z, o);
+    init.SetFacing(o);
+    init.MoveTo(x,y,z);
+    init.SetWalk(false);
+    init.Launch();
 
-    CreatureTraveller traveller(owner);
-
-    uint32 travel_time = i_destinationHolder.SetDestination(traveller, x, y, z);
-    modifyTravelTime(travel_time);
     owner.ClearUnitState(uint32(UNIT_STAT_ALL_STATE & ~UNIT_STAT_EVADE));
 }
 
 bool HomeMovementGenerator<Creature>::Update(Creature &owner, const uint32 time_diff)
 {
-    CreatureTraveller traveller(owner);
-    i_destinationHolder.UpdateTraveller(traveller, time_diff);
-
-    if (time_diff > i_travel_timer)
-    {
-        owner.AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
-
-        // restore orientation of not moving creature at returning to home
-        if (owner.GetDefaultMovementType() == IDLE_MOTION_TYPE)
-        {
-            //sLog->outDebug("Entering HomeMovement::GetDestination(z, y, z)");
-            owner.SetOrientation(ori);
-            WorldPacket packet;
-            owner.BuildHeartBeatMsg(&packet);
-            owner.SendMessageToSet(&packet, false);
-        }
-
-        owner.ClearUnitState(UNIT_STAT_EVADE);
-        owner.LoadCreaturesAddon(true);
-        owner.AI()->JustReachedHome();
-        return false;
-    }
-
-    i_travel_timer -= time_diff;
-
-    return true;
+    return !owner.movespline->Finalized();
 }

@@ -20,8 +20,9 @@
 #include "CreatureAI.h"
 #include "MapManager.h"
 #include "FleeingMovementGenerator.h"
-#include "DestinationHolderImp.h"
 #include "ObjectAccessor.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 #define MIN_QUIET_DISTANCE 28.0f
 #define MAX_QUIET_DISTANCE 43.0f
@@ -44,8 +45,11 @@ FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
         return;
 
     owner.AddUnitState(UNIT_STAT_FLEEING | UNIT_STAT_ROAMING);
-    Traveller<T> traveller(owner);
-    i_destinationHolder.SetDestination(traveller, x, y, z);
+
+    Movement::MoveSplineInit init(owner);
+    init.MoveTo(x,y,z);
+    init.SetWalk(false);
+    init.Launch();
 }
 
 template<>
@@ -372,25 +376,11 @@ FleeingMovementGenerator<T>::Update(T &owner, const uint32 time_diff)
     if (owner.HasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED))
         return true;
 
-    Traveller<T> traveller(owner);
-
     i_nextCheckTime.Update(time_diff);
 
-    if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || !i_destinationHolder.HasDestination())
-    {
+    if (i_nextCheckTime.Passed() && owner.movespline->Finalized())
         _setTargetLocation(owner);
-        return true;
-    }
 
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff))
-    {
-        i_destinationHolder.ResetUpdate(50);
-        if (i_nextCheckTime.Passed() && i_destinationHolder.HasArrived())
-        {
-            _setTargetLocation(owner);
-            return true;
-        }
-    }
     return true;
 }
 

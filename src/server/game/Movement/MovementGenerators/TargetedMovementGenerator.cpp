@@ -21,24 +21,13 @@
 #include "Errors.h"
 #include "Creature.h"
 #include "CreatureAI.h"
-#include "DestinationHolderImp.h"
 #include "World.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 #define SMALL_ALPHA 0.05f
 
 #include <cmath>
-/*
-struct StackCleaner
-{
-    Creature &i_creature;
-    StackCleaner(Creature &creature) : i_creature(creature) {}
-    void Done(void) { i_creature.StopMoving(); }
-    ~StackCleaner()
-    {
-        i_creature->Clear();
-    }
-};
-*/
 
 template<class T>
 TargetedMovementGenerator<T>::TargetedMovementGenerator(Unit &target, float offset, float angle)
@@ -60,7 +49,7 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
 
     float x, y, z;
     Traveller<T> traveller(owner);
-    if (i_destinationHolder.HasDestination())
+    if (!owner.movespline->Finalized()
     {
         if (i_destinationHolder.HasArrived())
         {
@@ -141,14 +130,13 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
         if (i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x, y, z) < bothObjectSize)
             return;
     */
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-        ((Creature&)owner).AddUnitMovementFlag(SPLINEFLAG_FLYING);
 
+    owner.AddUnitState(UNIT_STAT_CHASE);
     i_targetReached = false;
     i_recalculateTravel = false;
-    i_destinationHolder.SetDestination(traveller, x, y, z);
-    owner.AddUnitState(UNIT_STAT_CHASE);
-    i_destinationHolder.StartTravel(traveller);
+    Movement::MoveSplineInit init(owner);
+    init.MoveTo(x,y,z);
+    init.Launch();
     return true;
 }
 
@@ -201,17 +189,18 @@ TargetedMovementGenerator<T>::Update(T &owner, const uint32 time_diff)
     if (!owner.HasUnitState(UNIT_STAT_FOLLOW) && owner.getVictim() != i_target.getTarget())
         return true;
 
-    Traveller<T> traveller(owner);
-
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff))
+    i_recheckDistance.Update(time_diff);
+    if (i_recheckDistance.Passed())
     {
-        float dist = i_target->GetObjectSize() + owner.GetObjectSize()
+        float allowed_dist = i_target->GetObjectSize() + owner.GetObjectSize()
             + sWorld->getRate(RATE_TARGET_POS_RECALCULATION_RANGE);
-        if (i_destinationHolder.GetDistance3dFromDestSq(*i_target.getTarget()) > dist * dist)
+        float dist = (owner.movespline->FinalDestination() -
+            G3D::Vector3(i_target->GetPositionX(),i_target->GetPositionY(),i_target->GetPositionZ())).squaredLength();
+        if (dist >= allowed_dist * allowed_dist)
             _setTargetLocation(owner);
     }
 
-    if (i_destinationHolder.HasArrived())
+    if (owner.movespline->Finalized())
     {
         if (i_angle == 0.f && !owner.HasInArc(0.01f, i_target.getTarget()))
             owner.SetInFront(i_target.getTarget());

@@ -21,10 +21,11 @@
 #include "RandomMovementGenerator.h"
 #include "Traveller.h"
 #include "ObjectAccessor.h"
-#include "DestinationHolderImp.h"
 #include "Map.h"
 #include "Util.h"
 #include "CreatureGroups.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 #define RUNNING_CHANCE_RANDOMMV 20                                  //will be "1 / RUNNING_CHANCE_RANDOMMV"
 
@@ -112,15 +113,17 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
         break;
     }
 
-    creature.AddUnitMovementFlag(is_air_ok ? MOVEMENTFLAG_WALKING : MOVEMENTFLAG_CAN_FLY);
-    Traveller<Creature> traveller(creature);
-    creature.SetOrientation(creature.GetAngle(nx, ny));
-    i_destinationHolder.SetDestination(traveller, nx, ny, nz);
-    creature.AddUnitState(UNIT_STAT_ROAMING);
     if (is_air_ok)
-        i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
+        i_nextMoveTime.Reset(0);
     else
-        i_nextMoveTime.Reset(urand(500+i_destinationHolder.GetTotalTravelTime(), 5000+i_destinationHolder.GetTotalTravelTime()));
+        i_nextMoveTime.Reset(urand(500, 10000));
+
+    creature.AddUnitState(UNIT_STAT_ROAMING);
+
+    Movement::MoveSplineInit init(creature);
+    init.MoveTo(destX, destY, destZ);
+    init.SetWalk(true);
+    init.Launch();
 
     //Call for creature group update
     if (creature.GetFormation() && creature.GetFormation()->getLeader() == &creature)
@@ -153,7 +156,10 @@ RandomMovementGenerator<Creature>::Reset(Creature &creature)
 
 template<>
 void
-RandomMovementGenerator<Creature>::Finalize(Creature & /*creature*/){}
+RandomMovementGenerator<Creature>::Finalize(Creature & creature)
+{
+    creature.SetWalk(false);
+}
 
 template<>
 bool
@@ -166,11 +172,12 @@ RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 diff)
         return true;
     }
 
-    CreatureTraveller traveller(creature);
-
-    i_nextMoveTime.Update(diff);
-    if (i_nextMoveTime.Passed())
-        _setRandomLocation(creature);
+    if (creature.movespline->Finalized())
+    {
+        i_nextMoveTime.Update(diff);
+        if (i_nextMoveTime.Passed())
+            _setRandomLocation(creature);
+    }
 
     return true;
 }
