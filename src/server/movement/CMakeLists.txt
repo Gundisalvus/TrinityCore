@@ -25,10 +25,12 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/dep/g3dlite/include
   ${CMAKE_SOURCE_DIR}/src/server/shared
   ${CMAKE_SOURCE_DIR}/src/server/shared/Logging
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Packets
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement/MovementGenerators
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement/Waypoints
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement/PathFinding
+  ${CMAKE_SOURCE_DIR}/src/server/game/Miscellaneous
 )
 
 add_library(movement STATIC ${movement_STAT_SRCS})
