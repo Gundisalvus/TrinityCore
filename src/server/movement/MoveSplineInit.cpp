@@ -19,7 +19,7 @@
 #include "MoveSplineInit.h"
 #include "MoveSpline.h"
 #include "packet_builder.h"
-#include "../Unit.h"
+#include "Unit.h"
 
 namespace Movement
 {
@@ -75,7 +75,7 @@ namespace Movement
             moveFlags &= ~MOVEFLAG_WALK_MODE;
 
         moveFlags |= (MOVEFLAG_SPLINE_ENABLED|MOVEFLAG_FORWARD);
-        
+
         if (args.velocity == 0.f)
             args.velocity = unit.GetSpeed(SelectSpeedType(moveFlags));
 

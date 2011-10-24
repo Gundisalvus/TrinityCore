@@ -108,8 +108,6 @@ public PathMovementBase<Player, TaxiPathNodeList const*>
         void SkipCurrentNode() { ++i_currentNode; }
         void DoEventIfAny(Player& player, TaxiPathNodeEntry const& node, bool departure);
 
-        bool GetDestination(float& x, float& y, float& z) const { return PathMovementBase<Player, TaxiPathNodeList const*>::GetDestination(x, y, z); }
-
         void PreloadEndGrid();
         void InitEndGridInfo();
     private:

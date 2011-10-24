@@ -356,25 +356,6 @@ bool Unit::haveOffhandWeapon() const
         return m_canDualWield;
 }
 
-void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
-{
-    if (!transitTime)
-    {
-        if (GetTypeId() == TYPEID_PLAYER)
-        {
-            Traveller<Player> traveller(*(Player*)this);
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-        else
-        {
-            Traveller<Creature> traveller(*ToCreature());
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-    }
-    //float orientation = (float)atan2((double)dy, (double)dx);
-    SendMonsterMove(x, y, z, transitTime, player);
-}
-
 void Unit::SetFacing(float ori, WorldObject* obj)
 {
     SetOrientation(obj ? GetAngle(obj) : ori);
@@ -17431,7 +17412,7 @@ void Unit::UpdateSplineMovement(uint32 t_diff)
     bool arrived = movespline->Finalized();
 
     if (arrived)
-        m_movementInfo.RemoveMovementFlag(MovementFlags(MOVEMENTFLAG_SPLINE_ENABLED | MOVEMENTFLAG_FORWARD));
+        RemoveUnitMovementFlag(MovementFlags(MOVEMENTFLAG_SPLINE_ENABLED | MOVEMENTFLAG_FORWARD));
 
     m_movesplineTimer.Update(t_diff);
     if (m_movesplineTimer.Passed() || arrived)
@@ -17440,8 +17421,8 @@ void Unit::UpdateSplineMovement(uint32 t_diff)
         Movement::Location loc = movespline->ComputePosition();
 
         if (GetTypeId() == TYPEID_PLAYER)
-            ((Player*)this)->UpdatePosition(loc.x,loc.y,loc.z,loc.orientation);
+            ((Player*)this)->UpdatePosition(loc.x, loc.y, loc.z, loc.orientation);
         else
-            GetMap()->CreatureRelocation((Creature*)this,loc.x,loc.y,loc.z,loc.orientation);
+            GetMap()->CreatureRelocation((Creature*)this, loc.x, loc.y, loc.z, loc.orientation);
     }
 }

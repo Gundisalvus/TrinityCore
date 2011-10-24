@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef MANGOSSERVER_MOVEPLINE_H
-#define MANGOSSERVER_MOVEPLINE_H
+#ifndef _MOVESPLINE_H
+#define _MOVESPLINE_H
 
 #include "spline.h"
 #include "MoveSplineInitArgs.h"
@@ -96,7 +96,7 @@ namespace Movement
         template<class UpdateHandler>
         void updateState(int32 difftime, UpdateHandler& handler)
         {
-            MANGOS_ASSERT(Initialized());
+            ASSERT(Initialized());
             do
                 handler(_updateState(difftime));
             while(difftime > 0);
@@ -104,7 +104,7 @@ namespace Movement
 
         void updateState(int32 difftime)
         {
-            MANGOS_ASSERT(Initialized());
+            ASSERT(Initialized());
             do _updateState(difftime);
             while(difftime > 0);
         }
@@ -123,4 +123,4 @@ namespace Movement
         std::string ToString() const;
     };
 }
-#endif // MANGOSSERVER_MOVEPLINE_H
+#endif // _MOVESPLINE_H

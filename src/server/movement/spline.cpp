@@ -20,7 +20,8 @@
 #include <sstream>
 #include <G3D/Matrix4.h>
 
-namespace Movement{
+namespace Movement
+{
 
 SplineBase::EvaluationMethtod SplineBase::evaluators[SplineBase::ModesEnd] =
 {
@@ -115,51 +116,51 @@ inline void C_Evaluate_Derivative(const Vector3 *vertice, float t, const Matrix4
 
 void SplineBase::EvaluateLinear(index_type index, float u, Vector3& result) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     result = points[index] + (points[index+1] - points[index]) * u;
 }
 
 void SplineBase::EvaluateCatmullRom( index_type index, float t, Vector3& result) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     C_Evaluate(&points[index - 1], t, s_catmullRomCoeffs, result);
 }
 
 void SplineBase::EvaluateBezier3(index_type index, float t, Vector3& result) const
 {
     index *= 3u;
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     C_Evaluate(&points[index], t, s_Bezier3Coeffs, result);
 }
 
 void SplineBase::EvaluateDerivativeLinear(index_type index, float, Vector3& result) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     result = points[index+1] - points[index];
 }
 
 void SplineBase::EvaluateDerivativeCatmullRom(index_type index, float t, Vector3& result) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     C_Evaluate_Derivative(&points[index - 1], t, s_catmullRomCoeffs, result);
 }
 
 void SplineBase::EvaluateDerivativeBezier3(index_type index, float t, Vector3& result) const
 {
     index *= 3u;
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     C_Evaluate_Derivative(&points[index], t, s_Bezier3Coeffs, result);
 }
 
 float SplineBase::SegLengthLinear(index_type index) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
     return (points[index] - points[index+1]).length();
 }
 
 float SplineBase::SegLengthCatmullRom( index_type index ) const
 {
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
 
     Vector3 curPos, nextPos;
     const Vector3 * p = &points[index - 1];
@@ -180,7 +181,7 @@ float SplineBase::SegLengthCatmullRom( index_type index ) const
 float SplineBase::SegLengthBezier3(index_type index) const
 {
     index *= 3u;
-    MANGOS_ASSERT(index >= index_lo && index < index_hi);
+    ASSERT(index >= index_lo && index < index_hi);
 
     Vector3 curPos, nextPos;
     const Vector3 * p = &points[index];
@@ -219,7 +220,7 @@ void SplineBase::init_cyclic_spline(const Vector3 * controls, index_type count, 
 
 void SplineBase::InitLinear(const Vector3* controls, index_type count, bool cyclic, index_type cyclic_point)
 {
-    MANGOS_ASSERT(count >= 2);
+    ASSERT(count >= 2);
     const int real_size = count + 1;
 
     points.resize(real_size);

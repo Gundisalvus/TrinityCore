@@ -16,13 +16,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef MANGOSSERVER_SPLINE_H
-#define MANGOSSERVER_SPLINE_H
+#ifndef _SPLINE_H
+#define _SPLINE_H
 
 #include "typedefs.h"
 #include <G3D/Vector3.h>
 
-namespace Movement {
+namespace Movement
+{
 
 class SplineBase
 {
@@ -82,7 +83,7 @@ protected:
     typedef void (SplineBase::*InitMethtod)(const Vector3*, index_type, bool, index_type);
     static InitMethtod initializers[ModesEnd];
 
-    void UninitializedSpline() const { MANGOS_ASSERT(false);}
+    void UninitializedSpline() const { ASSERT(false);}
 
     #pragma endregion
 public:
@@ -159,7 +160,7 @@ public:
 
     /** Calculates the position for given segment Idx, and percent of segment length t
         @param t = partial_segment_length / whole_segment_length
-        @param Idx - spline segment index, should be in range [first, last). */   
+        @param Idx - spline segment index, should be in range [first, last). */
     void evaluate_percent(index_type Idx, float u, Vector3& c) const { SplineBase::evaluate_percent(Idx,u,c);}
 
     /** Caclulates derivation for index Idx, and percent of segment length t
@@ -175,7 +176,7 @@ public:
     void init_spline(const Vector3 * controls, index_type count, EvaluationMode m) { SplineBase::init_spline(controls,count,m);}
     void init_cyclic_spline(const Vector3 * controls, index_type count, EvaluationMode m, index_type cyclic_point) { SplineBase::init_cyclic_spline(controls,count,m,cyclic_point);}
 
-    /**  Initializes lengths with SplineBase::SegLength method. */    
+    /**  Initializes lengths with SplineBase::SegLength method. */
     void initLengths();
 
     /** Initializes lengths in some custom way
@@ -190,7 +191,7 @@ public:
             new_length = cacher(*this, i);
             lengths[++i] = new_length;
 
-            MANGOS_ASSERT(prev_length <= new_length);
+            ASSERT(prev_length <= new_length);
             prev_length = new_length;
         }
     }
@@ -209,4 +210,4 @@ public:
 
 #include "spline.impl.h"
 
-#endif // MANGOSSERVER_SPLINE_H
+#endif // _SPLINE_H

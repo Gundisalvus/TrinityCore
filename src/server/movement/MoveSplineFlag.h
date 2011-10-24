@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef MANGOSSERVER_MOVESPLINEFLAG_H
-#define MANGOSSERVER_MOVESPLINEFLAG_H
+#ifndef _MOVESPLINEFLAG_H
+#define _MOVESPLINEFLAG_H
 
 #include "typedefs.h"
 #include <string>
@@ -33,7 +33,8 @@ namespace Movement
     class MoveSplineFlag
     {
     public:
-        enum eFlags{
+        enum eFlags
+        {
             None         = 0x00000000,
                                                  // x00-xFF(first byte) used as animation Ids storage in pair with Animation flag
             Done         = 0x00000100,
@@ -139,4 +140,4 @@ namespace Movement
 #endif
 }
 
-#endif // MANGOSSERVER_MOVESPLINEFLAG_H
+#endif // _MOVESPLINEFLAG_H

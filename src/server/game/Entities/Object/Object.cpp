@@ -323,7 +323,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags) const
         const Player* player = ToPlayer();
 
         // 0x08000000
-        if (unit->m_movementInfo.GetMovementFlags() & MOVEFLAG_SPLINE_ENABLED)
+        if ((Unit*)this->GetMovementFlags() & MOVEMENTFLAG_SPLINE_ENABLED)
             Movement::PacketBuilder::WriteCreate(*unit->movespline, *data);
     }
     else

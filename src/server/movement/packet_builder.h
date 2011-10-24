@@ -15,9 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
-#ifndef MANGOSSERVER_PACKET_BUILDER_H
-#define MANGOSSERVER_PACKET_BUILDER_H
+
+#ifndef _PACKET_BUILDER_H
+#define _PACKET_BUILDER_H
 
 class ByteBuffer;
 class WorldPacket;
@@ -34,4 +34,4 @@ namespace Movement
         static void WriteCreate(const MoveSpline& mov, ByteBuffer& data);
     };
 }
-#endif // MANGOSSERVER_PACKET_BUILDER_H
+#endif // _PACKET_BUILDER_H
