@@ -54,7 +54,7 @@ class TargetedMovementGenerator
 
         bool _setTargetLocation(T &);
 
-        ShortTimeTracker i_recheckDistance;
+        TimeTracker i_recheckDistance;
         float i_offset;
         float i_angle;
         bool i_recalculateTravel : 1;

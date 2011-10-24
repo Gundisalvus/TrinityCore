@@ -27,8 +27,8 @@
 #include "CreatureGroups.h"
 //Player-specific
 #include "Player.h"
-#include "movement/MoveSplineInit.h"
-#include "movement/MoveSpline.h"
+#include "MoveSplineInit.h"
+#include "MoveSpline.h"
 
 template<class T>
 void

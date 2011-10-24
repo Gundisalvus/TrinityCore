@@ -22,8 +22,8 @@
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "World.h"
-#include "movement/MoveSplineInit.h"
-#include "movement/MoveSpline.h"
+#include "MoveSplineInit.h"
+#include "MoveSpline.h"
 
 #define SMALL_ALPHA 0.05f
 

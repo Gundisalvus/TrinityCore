@@ -20,8 +20,8 @@
 #include "MapManager.h"
 #include "Opcodes.h"
 #include "ConfusedMovementGenerator.h"
-#include "movement/MoveSplineInit.h"
-#include "movement/MoveSpline.h"
+#include "MoveSplineInit.h"
+#include "MoveSpline.h"
 #include "VMapFactory.h"
 #include "PathInfo.h"
 
