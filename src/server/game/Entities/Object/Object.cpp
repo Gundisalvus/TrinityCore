@@ -44,7 +44,7 @@
 #include "TemporarySummon.h"
 #include "Totem.h"
 #include "OutdoorPvPMgr.h"
-#include "movement/packet_builder.h"
+#include "packet_builder.h"
 
 uint32 GuidHigh2TypeId(uint32 guid_hi)
 {
