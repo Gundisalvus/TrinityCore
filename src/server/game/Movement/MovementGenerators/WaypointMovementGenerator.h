@@ -26,11 +26,8 @@
  */
 
 #include "MovementGenerator.h"
-#include "DestinationHolder.h"
 #include "WaypointManager.h"
 #include "Path.h"
-#include "Traveller.h"
-
 #include "Player.h"
 
 #include <vector>
@@ -53,12 +50,8 @@ class PathMovementBase
         void ReloadPath(T &);
         uint32 GetCurrentNode() const { return i_currentNode; }
 
-        bool GetDestination(float& x, float& y, float& z) const { i_destinationHolder.GetDestination(x, y, z); return true; }
-        bool GetPosition(float& x, float& y, float& z) const { i_destinationHolder.GetLocationNowNoMicroMovement(x, y, z); return true; }
-
     protected:
         uint32 i_currentNode;
-        DestinationHolder< Traveller<T> > i_destinationHolder;
         P i_path;
 };
 
