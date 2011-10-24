@@ -14,13 +14,6 @@ endif()
 
 file(GLOB sources_localdir *.cpp *.h)
 
-if( USE_COREPCH AND MSVC )
-  set(movement_STAT_SRCS
-    PrecompiledHeaders/movementPCH.cpp
-    PrecompiledHeaders/movementPCH.h
-  )
-endif()
-
 set(movement_STAT_SRCS
   ${movement_STAT_SRCS}
   ${sources_localdir}
@@ -40,12 +33,3 @@ include_directories(
 )
 
 add_library(movement STATIC ${movement_STAT_SRCS})
-
-# Generate precompiled header
-if( USE_COREPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    add_precompiled_header(movement ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/movementPCH.h)
-  elseif(MSVC)
-    add_native_precompiled_header(movement ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/movementPCH)
-  endif()
-endif()
