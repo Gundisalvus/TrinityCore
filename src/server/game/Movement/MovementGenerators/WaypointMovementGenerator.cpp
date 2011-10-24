@@ -17,7 +17,6 @@
  */
 //Basic headers
 #include "WaypointMovementGenerator.h"
-#include "DestinationHolderImp.h"
 //Extended headers
 #include "ObjectMgr.h"
 #include "World.h"
@@ -28,6 +27,8 @@
 #include "CreatureGroups.h"
 //Player-specific
 #include "Player.h"
+#include "movement/MoveSplineInit.h"
+#include "movement/MoveSpline.h"
 
 template<class T>
 void
@@ -35,7 +36,10 @@ WaypointMovementGenerator<T>::Initialize(T & /*u*/){}
 
 template<>
 void
-WaypointMovementGenerator<Creature>::Finalize(Creature & /*u*/){}
+WaypointMovementGenerator<Creature>::Finalize(Creature &u)
+{
+    u.SetWalk(false);
+}
 
 template<>
 void
@@ -54,10 +58,6 @@ void WaypointMovementGenerator<Creature>::MovementInform(Creature &unit)
 template<>
 bool WaypointMovementGenerator<Creature>::GetDestination(float &x, float &y, float &z) const
 {
-    if (i_destinationHolder.HasArrived())
-        return false;
-
-    i_destinationHolder.GetDestination(x, y, z);
     return true;
 }
 

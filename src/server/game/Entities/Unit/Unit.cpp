@@ -45,11 +45,9 @@
 #include "InstanceSaveMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "Path.h"
 #include "CreatureGroups.h"
 #include "PetAI.h"
 #include "PassiveAI.h"
-#include "Traveller.h"
 #include "TemporarySummon.h"
 #include "Vehicle.h"
 #include "Transport.h"
@@ -148,7 +146,7 @@ Unit::Unit(): WorldObject(),
 m_movedPlayer(NULL), m_lastSanctuaryTime(0), IsAIEnabled(false), NeedChangeAI(false),
 m_ControlledByPlayer(false), i_AI(NULL), i_disabledAI(NULL), m_procDeep(0),
 m_removedAurasCount(0), i_motionMaster(this), m_ThreatManager(this), m_vehicle(NULL),
-m_vehicleKit(NULL), m_unitTypeMask(UNIT_MASK_NONE), m_HostileRefManager(this)
+m_vehicleKit(NULL), movespline(new Movement::MoveSpline()), m_unitTypeMask(UNIT_MASK_NONE), m_HostileRefManager(this)
 {
 #ifdef _MSC_VER
 #pragma warning(default:4355)
@@ -279,6 +277,7 @@ Unit::~Unit()
 
     delete m_charmInfo;
     delete m_vehicleKit;
+    delete movespline;
 
     ASSERT(!m_duringRemoveFromWorld);
     ASSERT(!m_attacking);
@@ -345,6 +344,7 @@ void Unit::Update(uint32 p_time)
         ModifyAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, HealthAbovePct(75));
     }
 
+    UpdateSplineMovement(p_time);
     i_motionMaster.UpdateMotion(p_time);
 }
 
@@ -423,29 +423,6 @@ void Unit::SendMonsterStop(bool on_death)
     SendMessageToSet(&data, true);
 
     ClearUnitState(UNIT_STAT_MOVE);
-}
-
-void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint32 Time, Player* player)
-{
-    WorldPacket data(SMSG_MONSTER_MOVE, 1+12+4+1+4+4+4+12+GetPackGUID().size());
-    data.append(GetPackGUID());
-
-    data << uint8(0);                                       // new in 3.1
-    data << GetPositionX() << GetPositionY() << GetPositionZ();
-    data << getMSTime();
-
-    data << uint8(0);
-    data << uint32((GetUnitMovementFlags() & MOVEMENTFLAG_LEVITATING) ? SPLINEFLAG_FLYING : SPLINEFLAG_WALKING);
-    data << Time;                                           // Time in between points
-    data << uint32(1);                                      // 1 single waypoint
-    data << NewPosX << NewPosY << NewPosZ;                  // the single waypoint Point B
-
-    if (player)
-        player->GetSession()->SendPacket(&data);
-    else
-        SendMessageToSet(&data, true);
-
-    AddUnitState(UNIT_STAT_MOVE);
 }
 
 void Unit::SendMonsterMove(MonsterMoveData const& moveData, Player* player)
@@ -3104,6 +3081,11 @@ bool Unit::isInBackInMap(Unit const* target, float distance, float arc) const
 
 void Unit::SetFacingToObject(WorldObject* pObject)
 {
+    float ori = 0.f;
+    Movement::MoveSplineInit init(*this);
+    init.SetFacing(ori);
+    init.Launch();
+
     // update orientation at server
     SetOrientation(GetAngle(pObject));
 
@@ -14629,12 +14611,9 @@ void Unit::StopMoving()
 {
     ClearUnitState(UNIT_STAT_MOVING);
 
-    // send explicit stop packet
-    // rely on vmaps here because for example stormwind is in air
-    //float z = sMapMgr->GetBaseMap(GetMapId())->GetHeight(GetPositionX(), GetPositionY(), GetPositionZ(), true);
-    //if (fabs(GetPositionZ() - z) < 2.0f)
-    //    Relocate(GetPositionX(), GetPositionY(), z);
-    //Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
+    Movement::MoveSplineInit init(*this);
+    init.SetFacing(GetOrientation());
+    init.Launch();
 
     if (!(GetUnitMovementFlags() & MOVEMENTFLAG_ONTRANSPORT))
         SendMonsterStop();
@@ -17428,4 +17407,41 @@ void CharmInfo::SetIsReturning(bool val)
 bool CharmInfo::IsReturning()
 {
     return m_isReturning;
+}
+
+void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed)
+{
+    Movement::MoveSplineInit init(*this);
+    init.MoveTo(x,y,z);
+    init.SetVelocity(speed);
+    init.Launch();
+}
+
+void Unit::UpdateSplineMovement(uint32 t_diff)
+{
+    enum
+    {
+        POSITION_UPDATE_DELAY = 400,
+    };
+
+    if (movespline->Finalized())
+        return;
+
+    movespline->updateState(t_diff);
+    bool arrived = movespline->Finalized();
+
+    if (arrived)
+        m_movementInfo.RemoveMovementFlag(MovementFlags(MOVEFLAG_SPLINE_ENABLED | MOVEFLAG_FORWARD));
+
+    m_movesplineTimer.Update(t_diff);
+    if (m_movesplineTimer.Passed() || arrived)
+    {
+        m_movesplineTimer.Reset(POSITION_UPDATE_DELAY);
+        Movement::Location loc = movespline->ComputePosition();
+
+        if (GetTypeId() == TYPEID_PLAYER)
+            ((Player*)this)->SetPosition(loc.x,loc.y,loc.z,loc.orientation);
+        else
+            GetMap()->CreatureRelocation((Creature*)this,loc.x,loc.y,loc.z,loc.orientation);
+    }
 }

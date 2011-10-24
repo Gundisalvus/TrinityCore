@@ -23,6 +23,7 @@
 #include "movement/MoveSplineInit.h"
 #include "movement/MoveSpline.h"
 #include "VMapFactory.h"
+#include "PathInfo.h"
 
 #ifdef MAP_BASED_RAND_GEN
 #define rand_norm() unit.rand_norm()
@@ -30,61 +31,10 @@
 #endif
 
 template<class T>
-void
-ConfusedMovementGenerator<T>::Initialize(T &unit)
+void ConfusedMovementGenerator<T>::Initialize(T &unit)
 {
-    const float wander_distance = 11;
-    float x, y, z;
-    x = unit.GetPositionX();
-    y = unit.GetPositionY();
-    z = unit.GetPositionZ();
-
-    Map const* map = unit.GetBaseMap();
-
-    i_nextMove = 1;
-
-    bool is_water_ok, is_land_ok;
-    _InitSpecific(unit, is_water_ok, is_land_ok);
-
-    for (uint8 idx = 0; idx <= MAX_CONF_WAYPOINTS; ++idx)
-    {
-        float wanderX = x + wander_distance*(float)rand_norm() - wander_distance/2;
-        float wanderY = y + wander_distance*(float)rand_norm() - wander_distance/2;
-        Trinity::NormalizeMapCoord(wanderX);
-        Trinity::NormalizeMapCoord(wanderY);
-
-        float new_z = map->GetHeight(wanderX, wanderY, z, true);
-        if (new_z > INVALID_HEIGHT && unit.IsWithinLOS(wanderX, wanderY, new_z))
-        {
-            // Don't move in water if we're not already in
-            // Don't move on land if we're not already on it either
-            bool is_water_now = map->IsInWater(x, y, z);
-            bool is_water_next = map->IsInWater(wanderX, wanderY, new_z);
-            if ((is_water_now && !is_water_next && !is_land_ok) || (!is_water_now && is_water_next && !is_water_ok))
-            {
-                i_waypoints[idx][0] = idx > 0 ? i_waypoints[idx-1][0] : x; // Back to previous location
-                i_waypoints[idx][1] = idx > 0 ? i_waypoints[idx-1][1] : y;
-                i_waypoints[idx][2] = idx > 0 ? i_waypoints[idx-1][2] : z;
-                continue;
-            }
-
-            // Taken from FleeingMovementGenerator
-            if (!(new_z - z) || wander_distance / fabs(new_z - z) > 1.0f)
-            {
-                i_waypoints[idx][0] = wanderX;
-                i_waypoints[idx][1] = wanderY;
-                i_waypoints[idx][2] = new_z;
-                continue;
-            }
-        }
-        else    // Back to previous location
-        {
-            i_waypoints[idx][0] = idx > 0 ? i_waypoints[idx-1][0] : x;
-            i_waypoints[idx][1] = idx > 0 ? i_waypoints[idx-1][1] : y;
-            i_waypoints[idx][2] = idx > 0 ? i_waypoints[idx-1][2] : z;
-            continue;
-        }
-    }
+    // set initial position
+    unit.GetPosition(i_x, i_y, i_z);
 
     unit.SetTarget(0);
     unit.SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CONFUSED);
@@ -94,27 +44,10 @@ ConfusedMovementGenerator<T>::Initialize(T &unit)
     unit.AddUnitState(UNIT_STAT_CONFUSED);
 }
 
-template<>
-void
-ConfusedMovementGenerator<Creature>::_InitSpecific(Creature &creature, bool &is_water_ok, bool &is_land_ok)
-{
-    is_water_ok = creature.canSwim();
-    is_land_ok  = creature.canWalk();
-}
-
-template<>
-void
-ConfusedMovementGenerator<Player>::_InitSpecific(Player &, bool &is_water_ok, bool &is_land_ok)
-{
-    is_water_ok = true;
-    is_land_ok  = true;
-}
-
 template<class T>
 void
 ConfusedMovementGenerator<T>::Reset(T &unit)
 {
-    i_nextMove = 1;
     i_nextMoveTime.Reset(0);
     unit.StopMoving();
 }
@@ -131,10 +64,7 @@ ConfusedMovementGenerator<T>::Update(T &unit, const uint32 diff)
         // currently moving, update location
         Traveller<T> traveller(unit);
         if (unit.movespline->Finalized())
-        {
-            i_nextMove = urand(1,MAX_CONF_WAYPOINTS);
-            i_nextMoveTime.Reset(urand(0, 1500-1));     // TODO: check the minimum reset time, should be probably higher
-        }
+            i_nextMoveTime.Reset(urand(800, 1500));
     }
     else
     {
@@ -143,12 +73,22 @@ ConfusedMovementGenerator<T>::Update(T &unit, const uint32 diff)
         if (i_nextMoveTime.Passed())
         {
             // start moving
-            ASSERT(i_nextMove <= MAX_CONF_WAYPOINTS);
-            float x = i_waypoints[i_nextMove][0];
-            float y = i_waypoints[i_nextMove][1];
-            float z = i_waypoints[i_nextMove][2];
+            float x = i_x + 10.0f*(rand_norm_f() - 0.5f);
+            float y = i_y + 10.0f*(rand_norm_f() - 0.5f);
+            float z = i_z;
+
+            unit.UpdateAllowedPositionZ(x, y, z);
+
+            PathInfo path(&unit);
+            path.calculate(x, y, z);
+            if (!(path.getPathType() & PATHFIND_NORMAL))
+            {
+                i_nextMoveTime.Reset(urand(800, 1000));
+                return true;
+            }
+
             Movement::MoveSplineInit init(unit);
-            init.MoveTo(x, y, z);
+            init.MovebyPath(path.getPath());
             init.SetWalk(true);
             init.Launch();
         }
