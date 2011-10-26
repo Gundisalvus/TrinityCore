@@ -419,7 +419,7 @@ class MapCreature
     friend class Map; //map for moving creatures
     friend class ObjectGridLoader; //grid loader for loading creatures
 
-public:
+protected:
     MapCreature() : _moveState(CREATURE_CELL_MOVE_NONE) {}
 
 private:
@@ -456,7 +456,7 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
 
         void Update(uint32 time);                         // overwrited Unit::Update
-        void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
+        void GetRespawnPosition(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return GetCreatureInfo()->equipmentId; }
 
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
@@ -755,8 +755,8 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
         uint16 m_LootMode;                                  // bitmask, default LOOT_MODE_DEFAULT, determines what loot will be lootable
         uint32 guid_transport;
 
-        bool isVisibleForInState(WorldObject const* seer) const;
-        bool canSeeAlways(WorldObject const* obj) const;
+        bool IsInvisibleDueToDespawn() const;
+        bool CanAlwaysSee(WorldObject const* obj) const;
     private:
         //WaypointMovementGenerator vars
         uint32 m_waypointID;
