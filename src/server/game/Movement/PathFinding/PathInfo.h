@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _PATH_FINDER_H
-#define _PATH_FINDER_H
+#ifndef _PATH_INFO_H
+#define _PATH_INFO_H
 
 #include "MoveSplineInitArgs.h"
 #include "SharedDefines.h"
