@@ -138,7 +138,7 @@ namespace Movement
     {
         if(generatePath)
         {
-            PathFinder path(&unit);
+            PathInfo path(&unit);
             path.calculate(dest.x, dest.y, dest.z, forceDestination);
             MovebyPath(path.getPath());
         }
