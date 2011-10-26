@@ -22,13 +22,11 @@
 #include "PathFinder.h"
 #include "Log.h"
 
-#include "../recastnavigation/Detour/Include/DetourCommon.h"
+#include "DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
-PathInfo::PathInfo(const Unit* owner) :
-    m_polyLength(0), m_type(PATHFIND_BLANK),
-    m_useStraightPath(false), m_forceDestination(false),
-    m_sourceUnit(owner), m_navMesh(NULL), m_navMeshQuery(NULL)
+PathInfo::PathInfo(const Unit* owner) : m_polyLength(0), m_type(PATHFIND_BLANK), m_useStraightPath(false), m_forceDestination(false),
+m_sourceUnit(owner), m_navMesh(NULL), m_navMeshQuery(NULL)
 {
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUIDLow());
 
@@ -265,8 +263,8 @@ void PathInfo::BuildPolyPath(const Vector3 &startPos, const Vector3 &endPos)
         for (pathStartIndex = 0; pathStartIndex < m_polyLength; ++pathStartIndex)
         {
             // here to carch few bugs
-            MANGOS_ASSERT(m_pathPolyRefs[pathStartIndex] != INVALID_POLYREF);
-            
+            ASSERT(m_pathPolyRefs[pathStartIndex] != INVALID_POLYREF);
+
             if (m_pathPolyRefs[pathStartIndex] == startPoly)
             {
                 startPolyFound = true;
@@ -452,7 +450,7 @@ void PathInfo::BuildPointPath(const float *startPoint, const float *endPoint)
         (!(m_type & PATHFIND_NORMAL) || !inRange(getEndPosition(), getActualEndPosition(), 1.0f, 1.0f)))
     {
         // we may want to keep partial subpath
-        if(dist3DSqr(getActualEndPosition(), getEndPosition()) < 
+        if(dist3DSqr(getActualEndPosition(), getEndPosition()) <
             0.3f * dist3DSqr(getStartPosition(), getEndPosition()))
         {
             setActualEndPosition(getEndPosition());
