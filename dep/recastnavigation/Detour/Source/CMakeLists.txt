@@ -15,7 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-set(detour_SRCS
+
+set(Detour_SRCS
     DetourAlloc.cpp
     DetourCommon.cpp
     DetourNavMeshBuilder.cpp
@@ -32,6 +33,4 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/dep/recastnavigation/Detour/Include
 )
 
-add_library(detour STATIC
-  ${detour_SRCS}
-)
+add_library(Detour STATIC ${Detour_SRCS})
