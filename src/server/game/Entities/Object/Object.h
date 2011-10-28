@@ -504,6 +504,8 @@ struct MovementInfo
     void AddExtraMovementFlag(uint16 flag) { flags2 |= flag; }
     bool HasExtraMovementFlag(uint16 flag) const { return flags2 & flag; }
 
+    void SetMovementFlags(uint16 f) { flags = f; } // I'm not sure of this is correct.
+
     void OutDebug();
 };
 
