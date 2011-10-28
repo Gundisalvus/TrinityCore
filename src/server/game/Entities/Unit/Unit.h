@@ -1519,7 +1519,7 @@ class Unit : public WorldObject
             {
                 value = soft_cap + ((value - soft_cap) / 2);
             }
-        
+
             return value;
         }
         uint32 GetUnitMeleeSkill(Unit const* target = NULL) const { return (target ? getLevelForTarget(target) : getLevel()) * 5; }
@@ -2182,6 +2182,10 @@ class Unit : public WorldObject
         bool canFly() const     { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_CAN_FLY); }
         bool IsFlying() const   { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING); }
         void SetFlying(bool apply);
+
+        // Movement info
+        MovementInfo m_movementInfo;
+        Movement::MoveSpline* movespline;
 
         void RewardRage(uint32 damage, uint32 weaponSpeedHitFactor, bool attacker);
 

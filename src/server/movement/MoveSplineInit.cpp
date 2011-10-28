@@ -27,24 +27,24 @@ namespace Movement
     {
         if (moveFlags & MOVEMENTFLAG_FLYING)
         {
-            if ( moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.flight >= speed_obj.flight_back*/ )
-                return MOVEMENT_FLIGHT_BACK;
+            if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.flight >= speed_obj.flight_back*/)
+                return MOVE_FLIGHT_BACK;
             else
-                return MOVEMENTFLAG_FLIGHT;
+                return MOVE_FLIGHT;
         }
-        else if (moveFlags & MOVEFLAG_SWIMMING)
+        else if (moveFlags & MOVEMENTFLAG_SWIMMING)
         {
-            if (moveFlags & MOVEFLAG_BACKWARD /*&& speed_obj.swim >= speed_obj.swim_back*/)
+            if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.swim >= speed_obj.swim_back*/)
                 return MOVE_SWIM_BACK;
             else
                 return MOVE_SWIM;
         }
-        else if (moveFlags & MOVEFLAG_WALK_MODE)
+        else if (moveFlags & MOVEMENTFLAG_WALKING)
         {
             //if ( speed_obj.run > speed_obj.walk )
             return MOVE_WALK;
         }
-        else if (moveFlags & MOVEFLAG_BACKWARD /*&& speed_obj.run >= speed_obj.run_back*/)
+        else if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.run >= speed_obj.run_back*/)
             return MOVE_RUN_BACK;
 
         return MOVE_RUN;
@@ -55,7 +55,7 @@ namespace Movement
         MoveSpline& move_spline = *unit.movespline;
 
         Vector3 real_position(unit.GetPositionX(),unit.GetPositionY(),unit.GetPositionZ());
-        // there is a big chane that current position is unknown if current state is not finalized, need compute it
+        // there is a big chance that current position is unknown if current state is not finalized, need compute it
         // this also allows calculate spline position and update map position in much greater intervals
         if (!move_spline.Finalized())
             real_position = move_spline.ComputePosition();
@@ -66,15 +66,15 @@ namespace Movement
             MoveTo(real_position);
         }
 
-        // corrent first vertex
+        // current first vertex
         args.path[0] = real_position;
         uint32 moveFlags = unit.m_movementInfo.GetMovementFlags();
         if (args.flags.walkmode)
-            moveFlags |= MOVEFLAG_WALK_MODE;
+            moveFlags |= MOVEMENTFLAG_WALKING;
         else
-            moveFlags &= ~MOVEFLAG_WALK_MODE;
+            moveFlags &= ~MOVEMENTFLAG_WALKING;
 
-        moveFlags |= (MOVEFLAG_SPLINE_ENABLED|MOVEFLAG_FORWARD);
+        moveFlags |= (MOVEMENTFLAG_SPLINE_ENABLED | MOVEMENTFLAG_FORWARD);
 
         if (args.velocity == 0.f)
             args.velocity = unit.GetSpeed(SelectSpeedType(moveFlags));
@@ -86,7 +86,7 @@ namespace Movement
         move_spline.Initialize(args);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 64);
-        data << unit.GetPackGUID();
+        data.append(unit.GetPackGUID());
         PacketBuilder::WriteMonsterMove(move_spline, data);
         unit.SendMessageToSet(&data,true);
 
@@ -96,13 +96,13 @@ namespace Movement
     MoveSplineInit::MoveSplineInit(Unit& m) : unit(m)
     {
         // mix existing state into new
-        args.flags.walkmode = unit.m_movementInfo.HasMovementFlag(MOVEFLAG_WALK_MODE);
-        args.flags.flying = unit.m_movementInfo.HasMovementFlag((MovementFlags)(MOVEFLAG_FLYING|MOVEFLAG_LEVITATING));
+        args.flags.walkmode = unit.m_movementInfo.HasMovementFlag(MOVEMENTFLAG_WALKING);
+        args.flags.flying = unit.m_movementInfo.HasMovementFlag((MovementFlags)(MOVEMENTFLAG_FLYING | MOVEMENTFLAG_LEVITATING));
     }
 
     void MoveSplineInit::SetFacing(const Unit * target)
     {
         args.flags.EnableFacingTarget();
-        args.facing.target = target->GetObjectGuid().GetRawValue();
+        args.facing.target = target->GetGUID(); // I am not sure of this is correct.
     }
 }
