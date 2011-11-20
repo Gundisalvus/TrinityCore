@@ -48,7 +48,26 @@ bool PointMovementGenerator<T>::Update(T &unit, const uint32 diff)
             return true;
     }
 
+<<<<<<< HEAD
     return !unit.movespline->Finalized();
+=======
+    Traveller<T> traveller(unit);
+
+    i_destinationHolder.UpdateTraveller(traveller, diff);
+
+    if (i_destinationHolder.HasArrived())
+    {
+        unit.ClearUnitState(UNIT_STAT_MOVE);
+        arrived = true;
+        return false;
+    }
+    else if (!unit.HasUnitState(UNIT_STAT_MOVE) && !unit.HasUnitState(UNIT_STAT_JUMPING))
+    {
+        i_destinationHolder.StartTravel(traveller);
+    }
+
+    return true;
+>>>>>>> eb190eb0bc99cf3011ed4d7a30df5898b29aa441
 }
 
 template<class T>

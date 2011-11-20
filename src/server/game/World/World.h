@@ -722,10 +722,9 @@ class World
 
         LocaleConstant GetAvailableDbcLocale(LocaleConstant locale) const { if (m_availableDbcLocaleMask & (1 << locale)) return locale; else return m_defaultDbcLocale; }
 
-        //used World DB version
+        // used World DB version
         void LoadDBVersion();
         char const* GetDBVersion() const { return m_DBVersion.c_str(); }
-        char const* GetCreatureEventAIVersion() const { return m_CreatureEventAIVersion.c_str(); }
 
         void RecordTimeDiff(const char * text, ...);
 
@@ -739,9 +738,9 @@ class World
 
         bool isEventKillStart;
 
-        const CharacterNameData* GetCharacterNameData(uint32 guid) const;
-        void AddCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race, uint8 playerClass);
-        void UpdateCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race = RACE_NONE);
+        CharacterNameData const* GetCharacterNameData(uint32 guid) const;
+        void AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass);
+        void UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender = GENDER_NONE, uint8 race = RACE_NONE);
         void DeleteCharaceterNameData(uint32 guid) { _characterNameDataMap.erase(guid); }
 
         uint32 GetCleaningFlags() const { return m_CleaningFlags; }
@@ -821,13 +820,12 @@ class World
         //Player Queue
         Queue m_QueuedPlayer;
 
-        //sessions that are added async
+        // sessions that are added async
         void AddSession_(WorldSession* s);
         ACE_Based::LockedQueue<WorldSession*, ACE_Thread_Mutex> addSessQueue;
 
-        //used versions
+        // used versions
         std::string m_DBVersion;
-        std::string m_CreatureEventAIVersion;
 
         std::list<std::string> m_Autobroadcasts;
 

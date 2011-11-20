@@ -3834,19 +3834,23 @@ void Spell::SendSpellGo()
 
     if (castFlags & CAST_FLAG_RUNE_LIST)                   // rune cooldowns list
     {
-        Player* player = m_caster->ToPlayer();
-        uint8 runeMaskInitial = m_runesState;
-        uint8 runeMaskAfterCast = player->GetRunesState();
-        data << uint8(runeMaskInitial);                     // runes state before
-        data << uint8(runeMaskAfterCast);                   // runes state after
-        for (uint8 i = 0; i < MAX_RUNES; ++i)
+        //TODO: There is a crash caused by a spell with CAST_FLAG_RUNE_LIST casted by a creature
+        //The creature is the mover of a player, so HandleCastSpellOpcode uses it as the caster
+        if (Player* player = m_caster->ToPlayer())
         {
-            uint8 mask = (1 << i);
-            if (mask & runeMaskInitial && !(mask & runeMaskAfterCast))  // usable before andon cooldown now...
+            uint8 runeMaskInitial = m_runesState;
+            uint8 runeMaskAfterCast = player->GetRunesState();
+            data << uint8(runeMaskInitial);                     // runes state before
+            data << uint8(runeMaskAfterCast);                   // runes state after
+            for (uint8 i = 0; i < MAX_RUNES; ++i)
             {
-                // float casts ensure the division is performed on floats as we need float result
-                float baseCd = float(player->GetRuneBaseCooldown(i));
-                data << uint8((baseCd - float(player->GetRuneCooldown(i))) / baseCd * 255); // rune cooldown passed
+                uint8 mask = (1 << i);
+                if (mask & runeMaskInitial && !(mask & runeMaskAfterCast))  // usable before andon cooldown now...
+                {
+                    // float casts ensure the division is performed on floats as we need float result
+                    float baseCd = float(player->GetRuneBaseCooldown(i));
+                    data << uint8((baseCd - float(player->GetRuneCooldown(i))) / baseCd * 255); // rune cooldown passed
+                }
             }
         }
     }
@@ -4326,9 +4330,9 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
 
-    Player* plr = (Player*)m_caster;
+    Player* player = (Player*)m_caster;
 
-    if (plr->getClass() != CLASS_DEATH_KNIGHT)
+    if (player->getClass() != CLASS_DEATH_KNIGHT)
         return SPELL_CAST_OK;
 
     SpellRuneCostEntry const* src = sSpellRuneCostStore.LookupEntry(runeCostID);
@@ -4352,8 +4356,8 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
 
     for (uint32 i = 0; i < MAX_RUNES; ++i)
     {
-        RuneType rune = plr->GetCurrentRune(i);
-        if ((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
+        RuneType rune = player->GetCurrentRune(i);
+        if ((player->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
             runeCost[rune]--;
     }
 
@@ -6415,7 +6419,8 @@ bool Spell::IsNextMeleeSwingSpell() const
 
 bool Spell::IsAutoActionResetSpell() const
 {
-    return !IsTriggered() && (m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_AUTOATTACK);
+    // TODO: changed SPELL_INTERRUPT_FLAG_AUTOATTACK -> SPELL_INTERRUPT_FLAG_INTERRUPT to fix compile - is this check correct at all?
+    return !IsTriggered() && (m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_INTERRUPT);
 }
 
 bool Spell::IsNeedSendToClient() const

@@ -2746,22 +2746,18 @@ void World::UpdateMaxSessionCounters()
 
 void World::LoadDBVersion()
 {
-    QueryResult result = WorldDatabase.Query("SELECT db_version, script_version, cache_id FROM version LIMIT 1");
+    QueryResult result = WorldDatabase.Query("SELECT db_version, cache_id FROM version LIMIT 1");
     if (result)
     {
         Field* fields = result->Fetch();
         m_DBVersion              = fields[0].GetString();
-        m_CreatureEventAIVersion = fields[1].GetString();
 
         // will be overwrite by config values if different and non-0
-        m_int_configs[CONFIG_CLIENTCACHE_VERSION] = fields[2].GetUInt32();
+        m_int_configs[CONFIG_CLIENTCACHE_VERSION] = fields[1].GetUInt32();
     }
 
     if (m_DBVersion.empty())
         m_DBVersion = "Unknown world database.";
-
-    if (m_CreatureEventAIVersion.empty())
-        m_CreatureEventAIVersion = "Unknown creature EventAI.";
 }
 
 void World::ProcessStartEvent()
@@ -2873,7 +2869,7 @@ void World::LoadCharacterNameData()
     sLog->outString("Loaded name data for %u characters", count);
 }
 
-void World::AddCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race, uint8 playerClass)
+void World::AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass)
 {
     CharacterNameData& data = _characterNameDataMap[guid];
     data.m_name = name;
@@ -2882,18 +2878,22 @@ void World::AddCharacterNameData(uint32 guid, const std::string& name, uint8 gen
     data.m_class = playerClass;
 }
 
-void World::UpdateCharacterNameData(uint32 guid, const std::string& name, uint8 gender, uint8 race)
+void World::UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender /*= GENDER_NONE*/, uint8 race /*= RACE_NONE*/)
 {
     std::map<uint32, CharacterNameData>::iterator itr = _characterNameDataMap.find(guid);
     if (itr == _characterNameDataMap.end())
         return;
+
     itr->second.m_name = name;
-    itr->second.m_gender = gender;
-    if(race != RACE_NONE)
+
+    if (gender != GENDER_NONE)
+        itr->second.m_gender = gender;
+
+    if (race != RACE_NONE)
         itr->second.m_race = race;
 }
 
-const CharacterNameData* World::GetCharacterNameData(uint32 guid) const
+CharacterNameData const* World::GetCharacterNameData(uint32 guid) const
 {
     std::map<uint32, CharacterNameData>::const_iterator itr = _characterNameDataMap.find(guid);
     if (itr != _characterNameDataMap.end())

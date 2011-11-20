@@ -2020,21 +2020,20 @@ bool Player::ToggleDND()
     return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DND);
 }
 
-uint8 Player::chatTag() const
+uint8 Player::GetChatTag() const
 {
-    // it's bitmask
-    // 0x8 - ??
-    // 0x4 - gm
-    // 0x2 - dnd
-    // 0x1 - afk
+    uint8 tag = CHAT_TAG_NONE;
+
     if (isGMChat())
-        return 4;
-    else if (isDND())
-        return 3;
+        tag |= CHAT_TAG_GM;
+    if (isDND())
+        tag |= CHAT_TAG_DND;
     if (isAFK())
-        return 1;
-    else
-        return 0;
+        tag |= CHAT_TAG_AFK;
+    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER))
+        tag |= CHAT_TAG_DEV;
+
+    return tag;
 }
 
 void Player::SendTeleportPacket(Position &oldPos)
@@ -2278,7 +2277,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
             // remove from old map now
             if (oldmap)
-                oldmap->RemoveFromMap(this, false);
+                oldmap->RemovePlayerFromMap(this, false);
 
             // new final coordinates
             float final_x = x;
@@ -6227,11 +6226,11 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
     return false;
 }
 
-void Player::UpdateWeaponSkill (WeaponAttackType attType)
+void Player::UpdateWeaponSkill(WeaponAttackType attType)
 {
     // no skill gain in pvp
-    Unit* pVictim = getVictim();
-    if (pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+    Unit* victim = getVictim();
+    if (victim && victim->GetTypeId() == TYPEID_PLAYER)
         return;
 
     if (IsInFeralForm())
@@ -6240,42 +6239,25 @@ void Player::UpdateWeaponSkill (WeaponAttackType attType)
     if (GetShapeshiftForm() == FORM_TREE)
         return;                                             // use weapon but not skill up
 
-    if (pVictim && pVictim->GetTypeId() == TYPEID_UNIT && (pVictim->ToCreature()->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_SKILLGAIN))
+    if (victim && victim->GetTypeId() == TYPEID_UNIT && (victim->ToCreature()->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_SKILLGAIN))
         return;
 
     uint32 weapon_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_WEAPON);
 
-    switch (attType)
-    {
-        case BASE_ATTACK:
-        {
-            Item* tmpitem = GetWeaponForAttack(attType, true);
+    Item* tmpitem = GetWeaponForAttack(attType, true);
+    if (!tmpitem && attType == BASE_ATTACK)
+        UpdateSkill(SKILL_UNARMED, weapon_skill_gain);
+    else if (tmpitem && tmpitem->GetTemplate()->SubClass != ITEM_SUBCLASS_WEAPON_FISHING_POLE)
+        UpdateSkill(tmpitem->GetSkill(), weapon_skill_gain);
 
-            if (!tmpitem)
-                UpdateSkill(SKILL_UNARMED, weapon_skill_gain);
-            else if (tmpitem->GetTemplate()->SubClass != ITEM_SUBCLASS_WEAPON_FISHING_POLE)
-                UpdateSkill(tmpitem->GetSkill(), weapon_skill_gain);
-            break;
-        }
-        case OFF_ATTACK:
-        case RANGED_ATTACK:
-        {
-            Item* tmpitem = GetWeaponForAttack(attType, true);
-            if (tmpitem)
-                UpdateSkill(tmpitem->GetSkill(), weapon_skill_gain);
-            break;
-        }
-        default:
-            break;
-    }
     UpdateAllCritPercentages();
 }
 
-void Player::UpdateCombatSkills(Unit* pVictim, WeaponAttackType attType, bool defence)
+void Player::UpdateCombatSkills(Unit* victim, WeaponAttackType attType, bool defence)
 {
-    uint8 plevel = getLevel();                              // if defense than pVictim == attacker
+    uint8 plevel = getLevel();                              // if defense than victim == attacker
     uint8 greylevel = Trinity::XP::GetGrayLevel(plevel);
-    uint8 moblevel = pVictim->getLevelForTarget(this);
+    uint8 moblevel = victim->getLevelForTarget(this);
     if (moblevel < greylevel)
         return;
 
@@ -19357,7 +19339,7 @@ inline void Player::BuildPlayerChat(WorldPacket* data, uint8 msgtype, const std:
     *data << uint64(GetGUID());
     *data << uint32(text.length() + 1);
     *data << text;
-    *data << uint8(chatTag());
+    *data << uint8(GetChatTag());
 }
 
 void Player::Say(const std::string& text, const uint32 language)
