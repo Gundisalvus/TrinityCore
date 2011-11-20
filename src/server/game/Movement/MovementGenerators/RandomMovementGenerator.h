@@ -34,7 +34,6 @@ class RandomMovementGenerator
         void Finalize(T &);
         void Reset(T &);
         bool Update(T &, const uint32);
-        bool GetDestination(float &x, float &y, float &z) const;
         MovementGeneratorType GetMovementGeneratorType() { return RANDOM_MOTION_TYPE; }
     private:
         TimeTrackerSmall i_nextMoveTime;

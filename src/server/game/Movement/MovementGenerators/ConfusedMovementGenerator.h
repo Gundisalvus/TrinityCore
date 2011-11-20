@@ -33,13 +33,6 @@ class ConfusedMovementGenerator
         void Reset(T &);
         bool Update(T &, const uint32);
 
-        bool GetDestination(float &x, float &y, float &z) const
-        {
-            if (i_destinationHolder.HasArrived()) return false;
-            i_destinationHolder.GetDestination(x, y, z);
-            return true;
-        }
-
         MovementGeneratorType GetMovementGeneratorType() { return CONFUSED_MOTION_TYPE; }
     private:
         TimeTracker i_nextMoveTime;

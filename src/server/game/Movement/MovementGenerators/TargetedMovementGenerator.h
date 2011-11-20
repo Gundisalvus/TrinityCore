@@ -21,6 +21,8 @@
 
 #include "MovementGenerator.h"
 #include "FollowerReference.h"
+#include "PathInfo.h"
+#include "Unit.h"
 
 class TargetedMovementGeneratorBase
 {
@@ -47,9 +49,15 @@ class TargetedMovementGenerator
 
         void MovementInform(T &);
 
+        bool IsReachable() const
+        {
+            return (i_path) ? (i_path->getPathType() & PATHFIND_NORMAL) : true;
+        }
+
         Unit* GetTarget() const;
 
         void unitSpeedChanged() { i_recalculateTravel=true; }
+        bool EnableWalking() const;
     private:
 
         bool _setTargetLocation(T &);

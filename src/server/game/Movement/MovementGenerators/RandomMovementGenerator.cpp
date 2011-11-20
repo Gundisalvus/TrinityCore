@@ -19,7 +19,6 @@
 #include "Creature.h"
 #include "MapManager.h"
 #include "RandomMovementGenerator.h"
-#include "Traveller.h"
 #include "ObjectAccessor.h"
 #include "Map.h"
 #include "Util.h"
@@ -28,17 +27,6 @@
 #include "MoveSpline.h"
 
 #define RUNNING_CHANCE_RANDOMMV 20                                  //will be "1 / RUNNING_CHANCE_RANDOMMV"
-
-template<>
-bool
-RandomMovementGenerator<Creature>::GetDestination(float &x, float &y, float &z) const
-{
-    if (i_destinationHolder.HasArrived())
-        return false;
-
-    i_destinationHolder.GetDestination(x, y, z);
-    return true;
-}
 
 #ifdef MAP_BASED_RAND_GEN
 #define rand_norm() creature.rand_norm()
@@ -49,7 +37,6 @@ void
 RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
 {
     float X, Y, Z, z, nx, ny, nz, ori, dist;
-
     creature.GetHomePosition(X, Y, Z, ori);
 
     z = creature.GetPositionZ();
@@ -127,9 +114,7 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
 
     //Call for creature group update
     if (creature.GetFormation() && creature.GetFormation()->getLeader() == &creature)
-    {
         creature.GetFormation()->LeaderMoveTo(nx, ny, nz);
-    }
 }
 
 template<>

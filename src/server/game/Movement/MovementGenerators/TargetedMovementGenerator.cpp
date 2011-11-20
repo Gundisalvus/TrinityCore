@@ -48,7 +48,6 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
         return false;
 
     float x, y, z;
-    Traveller<T> traveller(owner);
     if (!owner.movespline->Finalized()
     {
         if (i_destinationHolder.HasArrived())
@@ -131,11 +130,23 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
             return;
     */
 
+    if (!i_path)
+        i_path = new PathInfo(&owner);
+
+    // allow pets following their master to cheat while generating paths
+    bool forceDest = (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+        && owner.hasUnitState(UNIT_STAT_FOLLOW));
+    i_path->calculate(x, y, z, forceDest);
+    if (i_path->getPathType() & PATHFIND_NOPATH)
+        return;
+
     owner.AddUnitState(UNIT_STAT_CHASE);
     i_targetReached = false;
     i_recalculateTravel = false;
+
     Movement::MoveSplineInit init(owner);
-    init.MoveTo(x,y,z);
+    init.MovebyPath(i_path->getPath());
+    init.SetWalk(((D*)this)->EnableWalking());
     init.Launch();
     return true;
 }
